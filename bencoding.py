@@ -1,8 +1,23 @@
-# Bytes in Python are represented as sequences of integers (each in the range 0 to 255)
+'''
+Bytes in Python are represented as sequences of integers (each in the range 0 to 255)
+Parsing the .torrent file
+Connecting to the tracker
+
+info - 
+    - length
+    - name
+    - piece length
+    - pieces
+
+
+    
+'''
+
 from collections import OrderedDict
+from hashlib import sha1
 import json
 
-class Bencoding():
+class Decode():
     TOKEN_INT = b'i'
     TOKEN_LIST = b'l'
     TOKEN_DICT = b'd'
@@ -33,7 +48,7 @@ class Bencoding():
         self.index += 1
 
         while self.data[self.index : self.index + 1] != self.TOKEN_END:
-            key = self.decode().decode('utf-8')
+            key = self.decode()
             self.index += 1
             value = self.decode()
 
@@ -50,7 +65,7 @@ class Bencoding():
         self.index = colon_i + int(str_len)
         return str_byte
 
-    def decode_integer(self) -> bytes:
+    def decode_integer(self) -> int:
         self.index += 1
         byte_int = b''
         while self.data[self.index : self.index + 1] != self.TOKEN_END:
@@ -65,14 +80,60 @@ class Bencoding():
         while self.data[self.index : self.index + 1] != self.TOKEN_END:
             list_bytes.append(self.decode())
             self.index += 1
-        
         return list_bytes
+    
+class Encode():
+
+    def encode(self, data):
+        self.data = data
+        if type(self.data) == str:
+            return self._encode_string(data)
+        elif type(self.data) == int:
+            return self._encode_int(data)
+        elif type(self.data) == list:
+            return self._enocode_list(data)
+        elif type(self.data) == bytes:
+            return self._encode_bytes(data)
+        elif type(self.data) == dict or type(data) == OrderedDict:
+            return self._encode_dict(data)
+        else:
+            return None
+
+    def _encode_int(self, value) -> bytes:
+        return str.encode('i' + str(value) + 'e')
+    
+    def _encode_string(self, value) -> bytes:
+        return str.encode(str(len(value)) + ":" + value)
+    
+    def _enocode_list(self, list) -> bytes:
+        result = b'l'
+        result += b''.join([ self.encode(val) for val in list])
+        result += b'e'
+        return result
+    
+    def _encode_bytes(self, data) -> bytes:
+        result = str.encode(str(len(data)))
+        result += b':'
+        result += data
+        return result
+    
+    def _encode_dict(self, dict) -> bytes:
+        result = b'd'
+        for k ,v in dict.items():
+            key = self.encode(k)
+            val = self.encode(v)
+
+            result += key + val
+        result += b'e'
+        return result
+
 
 if __name__ == "__main__" :
-    
+
     with open('ubuntu.torrent', 'rb') as file:
         torrent_meta = file.read()
         
-        data = Bencoding(torrent_meta).decode()
-        print(data)
-        
+        # decoded_data = Decode(torrent_meta).decode()
+        # encoded_data = Encode().encode(decoded_data)
+
+        # print(encoded_data)
