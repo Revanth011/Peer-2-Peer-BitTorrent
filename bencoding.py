@@ -15,7 +15,7 @@ info -
 
 from collections import OrderedDict
 from hashlib import sha1
-import json
+import torrent
 
 class Decode():
     TOKEN_INT = b'i'
@@ -35,15 +35,15 @@ class Decode():
         if byte_char is None:
             raise EOFError('Unexpected end-of-file')
         if byte_char == self.TOKEN_INT:
-            return self.decode_integer()
+            return self._decode_integer()
         elif byte_char in b'0123456789':
-            return self.decode_string()
+            return self._decode_string()
         elif byte_char == self.TOKEN_LIST:
-            return self.decode_list()
+            return self._decode_list()
         elif byte_char == self.TOKEN_DICT:
-            return self.decode_dictionary()
+            return self._decode_dictionary()
 
-    def decode_dictionary(self) -> bytes:
+    def _decode_dictionary(self) -> bytes:
         dict = OrderedDict()
         self.index += 1
 
@@ -57,7 +57,7 @@ class Decode():
         
         return dict
     
-    def decode_string(self) -> bytes:
+    def _decode_string(self) -> bytes:
         colon_i = self.data.index(self.TOKEN_STRING_COLON, self.index)
         str_len = self.data[self.index : colon_i]
         str_byte = self.data[colon_i + 1 : colon_i + 1 + int(str_len)]
@@ -65,7 +65,7 @@ class Decode():
         self.index = colon_i + int(str_len)
         return str_byte
 
-    def decode_integer(self) -> int:
+    def _decode_integer(self) -> int:
         self.index += 1
         byte_int = b''
         while self.data[self.index : self.index + 1] != self.TOKEN_END:
@@ -74,7 +74,7 @@ class Decode():
         
         return int(byte_int)
         
-    def decode_list(self) -> bytes:
+    def _decode_list(self) -> bytes:
         self.index += 1
         list_bytes = []
         while self.data[self.index : self.index + 1] != self.TOKEN_END:
@@ -130,10 +130,17 @@ class Encode():
 
 if __name__ == "__main__" :
 
-    with open('ubuntu.torrent', 'rb') as file:
-        torrent_meta = file.read()
+    # with open('ubuntu.torrent', 'rb') as file:
+    #     torrent_meta = file.read()
         
-        # decoded_data = Decode(torrent_meta).decode()
-        # encoded_data = Encode().encode(decoded_data)
+    #     decoded_data = Decode(torrent_meta).decode()
 
-        # print(encoded_data)
+    #     info = Encode().encode(decoded_data[b'info'])
+    #     sha = sha1(info).digest()
+
+    #     # sha = sha1(info).hexdigest()
+    #     print(sha)
+    #     print(decoded_data)
+    torrent_ = torrent.Torrent()
+    print(torrent_.is_multi_file())
+
